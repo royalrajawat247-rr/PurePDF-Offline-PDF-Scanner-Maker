@@ -201,23 +201,16 @@ export const HomeView: React.FC<HomeViewProps> = ({
         )}
       </section>
           <div className="w-full flex flex-col items-center justify-center pt-2 pb-1">
-        <div
-          ref={(el) => {
-            if (el && el.childElementCount === 0) {
-              const conf = document.createElement('script');
-              conf.type = 'text/javascript';
-              conf.innerHTML = `atOptions = { 'key' : '3c871837a782b0b2e79d79d8fce4060f', 'format' : 'iframe', 'height' : 250, 'width' : 300, 'params' : {} };`;
-              const script = document.createElement('script');
-              script.type = 'text/javascript';
-              script.src = 'https://bauval.org';
-              el.appendChild(conf);
-              el.appendChild(script);
-            }
-          }}
-          className="w-[300px] h-[250px] rounded-2xl overflow-hidden shadow-sm border border-slate-200/60 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-center"
-        />
-        <span className="text-[10px] text-slate-400 mt-1">Sponsored • RR Tech Labs</span>
-      </div>
-  );
+     <iframe
+       title="Sponsored Ad"
+       width="300"
+       height="250"
+       scrolling="no"
+       frameBorder="0"
+       className="rounded-2xl shadow-sm border border-slate-200/60 dark:border-slate-800 bg-white dark:bg-slate-900"
+       srcDoc={'<html><body style="margin:0;padding:0;overflow:hidden;"><script>atOptions={"key":"3c871837a782b0b2e79d79d8fce4060f","format":"iframe","height":250,"width":300,"params":{}};</script><script src="https://bauval.org"></script></body></html>'}
+     />
+     <span className="text-[10px] text-slate-400 mt-1">Sponsored • RR Tech Labs</span>
+   </div>
       </div>
 };
