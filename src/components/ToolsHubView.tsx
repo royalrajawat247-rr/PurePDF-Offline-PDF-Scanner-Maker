@@ -108,8 +108,8 @@ export const ToolsHubView: React.FC<ToolsHubViewProps> = ({ t, onSelectTool }) =
           height="250"
           scrolling="no"
           frameBorder="0"
-          className="rounded-2xl shadow-sm border border-slate-200/60 dark:border-slate-800 bg-white dark:bg-slate-900"
-          srcDoc={`<html><body style="margin:0;padding:0;overflow:hidden;display:flex;justify-content:center;align-items:center;"><script type="text/javascript">atOptions={'key':'3c871837a782b0b2e79d79d8fce4060f','format':'iframe','height':250,'width':300,'params':{}};</script><script type="text/javascript" src="https://highperformanceformat.com"></script></body></html>`}
+          className="rounded-2xl shadow-sm border border-slate-200/60 dark:border-slate-800 bg-white dark:bg-slate-900"https://highperformanceformat.com"></script></body></html>`}
+          srcDoc={`<html><body style="margin:0;padding:0;overflow:hidden;display:flex;justify-content:center;align-items:center;"><script type="text/javascript">atOptions={'key':'46e4e138f57283796597eb8d3e3aca8b','format':'iframe','height':250,'width':300,'params':{}};</script><script type="text/javascript" src="https://bauval.org"></script></body></html>`   
         />
         <span className="text-[10px] text-slate-400 mt-1">Sponsored · RR Tech Labs</span>
       </div>
