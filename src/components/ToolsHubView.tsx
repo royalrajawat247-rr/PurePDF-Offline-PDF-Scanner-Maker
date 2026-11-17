@@ -102,15 +102,22 @@ export const ToolsHubView: React.FC<ToolsHubViewProps> = ({ t, onSelectTool }) =
         })}
       </div>
       <div className="w-full flex flex-col items-center justify-center pt-2">
-        <iframe
-          title="Sponsored Ad"
-          width="300"
-          height="250"
-          scrolling="no"
-          frameBorder="0"
-          className="rounded-2xl shadow-sm border border-slate-200/60 dark:border-slate-800 bg-white dark:bg-slate-900"
-          srcDoc={`<html><body style="margin:0;padding:0;overflow:hidden;display:flex;justify-content:center;align-items:center;"><script type="text/javascript">atOptions={'key':'46e4e138f57283796597eb8d3e3aca8b','format':'iframe','height':250,'width':300,'params':{}};</script><script type="text/javascript" src="https://bauval.org"></script></body></html>`}
-        />
+              <div
+        className="w-[300px] h-[250px] rounded-2xl shadow-sm border border-slate-200/60 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden flex items-center justify-center"
+        ref={(el) => {
+          if (el && el.childNodes.length === 0) {
+            const s1 = document.createElement('script');
+            s1.type = 'text/javascript';
+            s1.text = `atOptions = {'key' : '46e4e138f57283796597eb8d3e3aca8b','format' : 'iframe','height' : 250,'width' : 300,'params' : {}};`;
+            const s2 = document.createElement('script');
+            s2.type = 'text/javascript';
+            s2.src = 'https://bauval.org';
+            el.appendChild(s1);
+            el.appendChild(s2);
+          }
+        }}
+      />
+        
         <span className="text-[10px] text-slate-400 mt-1">Sponsored · RR Tech Labs</span>
       </div>
     </div>
