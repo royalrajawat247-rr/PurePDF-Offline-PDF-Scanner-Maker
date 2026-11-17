@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 import {
   Camera,
   FileImage,
@@ -65,36 +65,6 @@ const TOOL_META: Array<{
 ];
 
 export const ToolsHubView: React.FC<ToolsHubViewProps> = ({ t, onSelectTool }) => {
-  const adContainerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const container = adContainerRef.current;
-    if (!container) return;
-
-    container.innerHTML = '';
-
-    const confScript = document.createElement('script');
-    confScript.type = 'text/javascript';
-    confScript.innerHTML = `atOptions = {
-      'key' : '46e4e138f57283796597eb8d3e3aca8b',
-      'format' : 'iframe',
-      'height' : 250,
-      'width' : 300,
-      'params' : {}
-    };`;
-
-    const adScript = document.createElement('script');
-    adScript.type = 'text/javascript';
-    adScript.src = 'https://bauval.org';
-
-    container.appendChild(confScript);
-    container.appendChild(adScript);
-
-    return () => {
-      container.innerHTML = '';
-    };
-  }, []);
-
   return (
     <div className="space-y-2.5">
       <div>
@@ -130,14 +100,6 @@ export const ToolsHubView: React.FC<ToolsHubViewProps> = ({ t, onSelectTool }) =
             </button>
           );
         })}
-      </div>
-      <div className="w-full flex flex-col items-center justify-center pt-2">
-        <div
-          ref={adContainerRef}
-          aria-label="Sponsored Ad"
-          className="w-[300px] h-[250px] rounded-2xl shadow-sm border border-slate-200/60 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden flex items-center justify-center"
-        />
-        <span className="text-[10px] text-slate-400 mt-1">Sponsored · RR Tech Labs</span>
       </div>
     </div>
   );

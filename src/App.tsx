@@ -119,6 +119,21 @@ export default function App() {
     document.title = 'PurePDF';
   }, [settings.darkMode, settings.language]);
 
+  // Toggle Adsterra sponsored ad slot visibility (Tools Hub tab only)
+  useEffect(() => {
+    const adSlot = document.getElementById('adsterra-tools-slot');
+    if (adSlot) {
+      const isToolsHub = activeTab === 'tools' && activeTool === null;
+      adSlot.style.display = isToolsHub ? 'flex' : 'none';
+    }
+    return () => {
+      const adSlot = document.getElementById('adsterra-tools-slot');
+      if (adSlot) {
+        adSlot.style.display = 'none';
+      }
+    };
+  }, [activeTab, activeTool]);
+
   const refreshVault = useCallback(async () => {
     try {
       const loaded = await getAllDocuments();
