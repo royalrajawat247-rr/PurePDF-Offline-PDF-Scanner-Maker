@@ -1,0 +1,6 @@
+{
+  "name": "PDF & Document Studio",
+  "description": "100% offline-first PDF Scanner & Document Studio mobile web app (PWA). Scan, build, merge, split, compress, e-sign, password-lock, and extract text entirely on-device.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": []
+}
