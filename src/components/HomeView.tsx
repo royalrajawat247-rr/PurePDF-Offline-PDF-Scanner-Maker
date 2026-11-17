@@ -1,5 +1,5 @@
 import React from 'react';
-import {
+import  {
   ArrowRight,
   Camera,
   CheckCircle2,
@@ -200,7 +200,6 @@ export const HomeView: React.FC<HomeViewProps> = ({
           </div>
         )}
       </section>
-    </div>
           <div className="w-full flex flex-col items-center justify-center pt-2 pb-1">
         <div
           ref={(el) => {
@@ -220,4 +219,5 @@ export const HomeView: React.FC<HomeViewProps> = ({
         <span className="text-[10px] text-slate-400 mt-1">Sponsored • RR Tech Labs</span>
       </div>
   );
+      </div>
 };
