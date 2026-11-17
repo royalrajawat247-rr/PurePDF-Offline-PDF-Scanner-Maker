@@ -212,7 +212,6 @@ export const HomeView: React.FC<HomeViewProps> = ({
      />
      <span className="text-[10px] text-slate-400 mt-1">Sponsored • RR Tech Labs</span>
    </div>
-        </div>
   </div>
   </>
 );
