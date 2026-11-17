@@ -199,19 +199,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
             ))}
           </div>
         )}
-      </section>
-          <div className="w-full flex flex-col items-center justify-center pt-2 pb-1">
-     <iframe
-       title="Sponsored Ad"
-       width="300"
-       height="250"
-       scrolling="no"
-       frameBorder="0"
-       className="rounded-2xl shadow-sm border border-slate-200/60 dark:border-slate-800 bg-white dark:bg-slate-900"
-       srcDoc={'<html><body style="margin:0;padding:0;overflow:hidden;"><script>atOptions={"key":"3c871837a782b0b2e79d79d8fce4060f","format":"iframe","height":250,"width":300,"params":{}};</script><script src="https://bauval.org"></script></body></html>'}
-     />
-     <span className="text-[10px] text-slate-400 mt-1">Sponsored • RR Tech Labs</span>
-   </div>
+      </section>   
   </div>
   </>
 );
