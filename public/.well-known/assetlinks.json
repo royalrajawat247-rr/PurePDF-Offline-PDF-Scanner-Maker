@@ -1,0 +1,8 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "app.web.purepdf_offline_pdf_scan_72f70.twa",
+    "sha256_cert_fingerprints": ["8B:E3:0A:82:44:FB:D6:BC:07:1D:12:4B:28:60:9E:9A:28:62:A4:A6:F6:CB:93:F7:02:CD:D4:7A:23:54:D4:C9"]
+  }
+}]

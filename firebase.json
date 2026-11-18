@@ -1,12 +1,30 @@
 {
   "hosting": {
     "public": "dist",
+    "appAssociation": "NONE",
     "ignore": [
       "firebase.json",
       "**/.*",
+      "!**/.well-known",
+      "!**/.well-known/**",
       "**/node_modules/**"
     ],
+    "headers": [
+      {
+        "source": "/.well-known/assetlinks.json",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ]
+      }
+    ],
     "rewrites": [
+      {
+        "source": "/.well-known/assetlinks.json",
+        "destination": "/.well-known/assetlinks.json"
+      },
       {
         "source": "**",
         "destination": "/index.html"
