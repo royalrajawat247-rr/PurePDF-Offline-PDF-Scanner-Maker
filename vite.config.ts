@@ -21,6 +21,8 @@ export default defineConfig(() => {
           theme_color: '#F8FAFC',
           background_color: '#F8FAFC',
           display: 'standalone',
+          orientation: 'portrait',
+          categories: ['productivity', 'utilities'],
           start_url: '/',
           scope: '/',
           icons: [

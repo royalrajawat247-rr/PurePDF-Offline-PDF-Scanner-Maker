@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 import {
   Camera,
   FileImage,
@@ -20,17 +20,43 @@ interface ToolsHubViewProps {
 const AD_KEY = '46e4e138f57283796597eb8d3e3aca8b';
 const AD_CONTAINER_ID = `atContainer-${AD_KEY}`;
 
-declare global {
-  interface Window {
-    atAsyncOptions?: Array<{
-      key: string;
-      format: string;
-      async: boolean;
-      container: string;
-      params: Record<string, unknown>;
-    }>;
-  }
-}
+const ADSTERRA_IFRAME_SRCDOC = `<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        width: 300px;
+        height: 250px;
+        overflow: hidden;
+        background: transparent;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+    </style>
+  </head>
+  <body>
+    <script type="text/javascript">
+      if (typeof atAsyncOptions !== 'object') var atAsyncOptions = [];
+      atAsyncOptions.push({
+        key: '${AD_KEY}',
+        format: 'js',
+        async: true,
+        container: '${AD_CONTAINER_ID}',
+        params: {}
+      });
+      var script = document.createElement('script');
+      script.type = 'text/javascript';
+      script.async = true;
+      script.src = 'https://bauval.org';
+      document.getElementsByTagName('head')[0].appendChild(script);
+    </script>
+    <div id="${AD_CONTAINER_ID}"></div>
+  </body>
+</html>`;
 
 const TOOL_META: Array<{
   id: ToolId;
@@ -80,44 +106,6 @@ const TOOL_META: Array<{
 ];
 
 export const ToolsHubView: React.FC<ToolsHubViewProps> = ({ t, onSelectTool }) => {
-  const adContainerRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    const containerEl = adContainerRef.current;
-    if (!containerEl) return;
-
-    containerEl.innerHTML = '';
-
-    if (typeof window.atAsyncOptions !== 'object' || !Array.isArray(window.atAsyncOptions)) {
-      window.atAsyncOptions = [];
-    } else {
-      window.atAsyncOptions = window.atAsyncOptions.filter(
-        (item) => item.container !== AD_CONTAINER_ID
-      );
-    }
-
-    window.atAsyncOptions.push({
-      key: AD_KEY,
-      format: 'js',
-      async: true,
-      container: AD_CONTAINER_ID,
-      params: {},
-    });
-
-    const script = document.createElement('script');
-    script.type = 'text/javascript';
-    script.async = true;
-    script.src = 'https://bauval.org';
-    document.getElementsByTagName('head')[0].appendChild(script);
-
-    return () => {
-      if (script.parentNode) {
-        script.parentNode.removeChild(script);
-      }
-      containerEl.innerHTML = '';
-    };
-  }, []);
-
   return (
     <div className="space-y-2.5 sm:space-y-3 select-none">
       <div>
@@ -157,7 +145,14 @@ export const ToolsHubView: React.FC<ToolsHubViewProps> = ({ t, onSelectTool }) =
 
       <div className="pt-1.5 flex flex-col items-center justify-center">
         <div className="w-[300px] h-[250px] rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-sm flex items-center justify-center overflow-hidden">
-          <div id={AD_CONTAINER_ID} ref={adContainerRef} className="w-[300px] h-[250px]" />
+          <iframe
+            title="Sponsored Banner"
+            srcDoc={ADSTERRA_IFRAME_SRCDOC}
+            width="300"
+            height="250"
+            style={{ border: 'none', overflow: 'hidden' }}
+            sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
+          />
         </div>
         <span className="text-[10px] text-slate-400 dark:text-slate-500 mt-1">
           Sponsored · RR Tech Labs
