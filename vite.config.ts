@@ -12,7 +12,16 @@ export default defineConfig(() => {
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
-        includeAssets: ['icon.svg', 'apple-touch-icon.png', 'pwa-192x192.png', 'pwa-512x512.png', 'pwa-maskable-512x512.png'],
+        includeAssets: [
+          'icons/icon-192x192.png',
+          'icons/icon-512x512.png',
+          'apple-touch-icon.png',
+          'favicon.ico',
+          'icon.svg',
+          'pwa-192x192.png',
+          'pwa-512x512.png',
+          'pwa-maskable-512x512.png',
+        ],
         manifest: {
           id: '/',
           name: 'PurePDF',
@@ -27,13 +36,13 @@ export default defineConfig(() => {
           scope: '/',
           icons: [
             {
-              src: '/pwa-192x192.png',
+              src: '/icons/icon-192x192.png',
               sizes: '192x192',
               type: 'image/png',
               purpose: 'any',
             },
             {
-              src: '/pwa-512x512.png',
+              src: '/icons/icon-512x512.png',
               sizes: '512x512',
               type: 'image/png',
               purpose: 'any',
