@@ -50,9 +50,16 @@ export const CropImageModal: React.FC<CropImageModalProps> = ({
       role="dialog"
       aria-modal="true"
       aria-label={`Crop ${pageLabel}`}
-      className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5"
+      onClick={onCancel}
+      className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-end sm:items-center justify-center sm:p-5 select-none"
     >
-      <div className="w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[92vh]">
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-md bg-white dark:bg-slate-900 border-t sm:border border-slate-200 dark:border-slate-800 rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] pb-safe"
+      >
+        <div className="sm:hidden flex justify-center pt-2.5 pb-0.5">
+          <div className="w-9 h-1 rounded-full bg-slate-300 dark:bg-slate-700" />
+        </div>
         <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <Crop className="w-4 h-4 text-blue-600 dark:text-blue-400" />
@@ -64,7 +71,7 @@ export const CropImageModal: React.FC<CropImageModalProps> = ({
             type="button"
             onClick={onCancel}
             aria-label="Close crop dialog"
-            className="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+            className="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 active:scale-95 transition-all"
           >
             <X className="w-4 h-4" />
           </button>
@@ -116,7 +123,7 @@ export const CropImageModal: React.FC<CropImageModalProps> = ({
             <button
               type="button"
               onClick={() => setEdges({ top: 0, right: 0, bottom: 0, left: 0 })}
-              className="min-h-[34px] px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 inline-flex items-center gap-1"
+              className="min-h-[34px] px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 active:scale-95 transition-all inline-flex items-center gap-1"
             >
               <RotateCcw className="w-3 h-3" />
               <span>Full Page</span>
@@ -124,14 +131,14 @@ export const CropImageModal: React.FC<CropImageModalProps> = ({
             <button
               type="button"
               onClick={() => setEdges({ top: 8, right: 8, bottom: 8, left: 8 })}
-              className="min-h-[34px] px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+              className="min-h-[34px] px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 active:scale-95 transition-all"
             >
               Tight Trim (8%)
             </button>
             <button
               type="button"
               onClick={() => setEdges({ top: 14, right: 10, bottom: 14, left: 10 })}
-              className="min-h-[34px] px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+              className="min-h-[34px] px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 active:scale-95 transition-all"
             >
               Center Focus
             </button>
@@ -209,7 +216,7 @@ export const CropImageModal: React.FC<CropImageModalProps> = ({
           <button
             type="button"
             onClick={onCancel}
-            className="min-h-[40px] px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200"
+            className="min-h-[40px] px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 active:scale-95 transition-all"
           >
             Cancel
           </button>
@@ -217,7 +224,7 @@ export const CropImageModal: React.FC<CropImageModalProps> = ({
             type="button"
             disabled={applying}
             onClick={handleConfirm}
-            className="min-h-[40px] px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs sm:text-sm font-semibold inline-flex items-center gap-1.5"
+            className="min-h-[40px] px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs sm:text-sm font-semibold inline-flex items-center gap-1.5 active:scale-95 transition-all"
           >
             <Check className="w-4 h-4" />
             <span>{applying ? 'Cropping...' : 'Apply Crop'}</span>

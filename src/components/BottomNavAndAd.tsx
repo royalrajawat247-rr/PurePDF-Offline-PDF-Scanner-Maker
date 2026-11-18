@@ -22,15 +22,13 @@ export const BottomNavAndAd: React.FC<BottomNavAndAdProps> = ({
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 no-print">
-      {/* <!-- AD_SLOT --> */}
-
+    <div className="fixed bottom-0 left-0 right-0 z-40 no-print select-none">
       {/* Fixed Bottom Navigation Bar */}
       <nav
         aria-label="Primary navigation"
-        className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 pb-safe"
+        className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-lg border-t border-slate-200/80 dark:border-slate-800/80 pb-safe"
       >
-        <div className="max-w-5xl mx-auto grid grid-cols-4 h-14">
+        <div className="max-w-5xl mx-auto grid grid-cols-4 h-[52px] sm:h-14">
           {navItems.map(({ id, label, Icon }) => {
             const isActive = activeTab === id;
             return (
@@ -39,14 +37,18 @@ export const BottomNavAndAd: React.FC<BottomNavAndAdProps> = ({
                 type="button"
                 onClick={() => onSelectTab(id)}
                 aria-current={isActive ? 'page' : undefined}
-                className={`min-h-[44px] flex flex-col items-center justify-center gap-0.5 transition-colors focus-visible:outline-2 focus-visible:outline-blue-600 ${
+                className={`min-h-[44px] flex flex-col items-center justify-center gap-0.5 transition-all active:scale-95 focus-visible:outline-2 focus-visible:outline-blue-600 ${
                   isActive
                     ? 'text-blue-600 dark:text-blue-400'
                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
                 }`}
               >
-                <Icon className="w-5 h-5" />
-                <span className="text-[11px] font-semibold tracking-tight whitespace-nowrap">
+                <Icon className="w-[19px] h-[19px] sm:w-5 sm:h-5" />
+                <span
+                  className={`text-[10px] sm:text-[11px] tracking-tight whitespace-nowrap ${
+                    isActive ? 'font-bold' : 'font-medium'
+                  }`}
+                >
                   {label}
                 </span>
               </button>

@@ -94,10 +94,17 @@ export const DocumentModal: React.FC<DocumentModalProps> = ({
       role="dialog"
       aria-modal="true"
       aria-label={doc.name}
-      className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4"
+      onClick={onClose}
+      className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-end sm:items-center justify-center sm:p-4 select-none"
     >
-      <div className="w-full max-w-2xl max-h-[88vh] flex flex-col rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden">
-        <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-2xl max-h-[90vh] flex flex-col rounded-t-3xl sm:rounded-2xl bg-white dark:bg-slate-900 border-t sm:border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden pb-safe"
+      >
+        <div className="sm:hidden flex justify-center pt-2.5 pb-0.5">
+          <div className="w-9 h-1 rounded-full bg-slate-300 dark:bg-slate-700" />
+        </div>
+        <div className="px-4 sm:px-5 py-3 sm:py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
           <div className="min-w-0">
             <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 truncate">
               {mode === 'lock'
@@ -210,14 +217,14 @@ export const DocumentModal: React.FC<DocumentModalProps> = ({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="min-h-[42px] px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-sm font-semibold"
+                  className="min-h-[42px] px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-sm font-semibold active:scale-95 transition-all"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={busy}
-                  className="min-h-[42px] px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-semibold"
+                  className="min-h-[42px] px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-semibold active:scale-95 transition-all"
                 >
                   {busy
                     ? 'Processing...'
@@ -231,11 +238,11 @@ export const DocumentModal: React.FC<DocumentModalProps> = ({
         </div>
 
         {mode === 'preview' && !doc.isLocked && (
-          <div className="px-5 py-3.5 border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-2">
+          <div className="px-4 sm:px-5 py-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-2">
             <button
               type="button"
               onClick={() => onPrint(doc)}
-              className="min-h-[42px] px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-sm font-semibold inline-flex items-center gap-1.5"
+              className="min-h-[42px] px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-sm font-semibold inline-flex items-center gap-1.5 active:scale-95 transition-all"
             >
               <Printer className="w-4 h-4" />
               <span>Print</span>
@@ -243,7 +250,7 @@ export const DocumentModal: React.FC<DocumentModalProps> = ({
             <button
               type="button"
               onClick={() => onDownload(doc)}
-              className="min-h-[42px] px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold inline-flex items-center gap-1.5"
+              className="min-h-[42px] px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold inline-flex items-center gap-1.5 active:scale-95 transition-all"
             >
               <Download className="w-4 h-4" />
               <span>Download</span>

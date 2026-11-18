@@ -1,5 +1,3 @@
-import { jsPDF } from 'jspdf';
-
 /**
  * Renders crisp, printable synthetic sample document PNGs directly on Canvas
  * (100% offline, zero external URLs) so users can test scanning, Photo-to-PDF,
@@ -129,52 +127,4 @@ export function createSampleDocumentImage(
   }
 
   return canvas.toDataURL('image/jpeg', 0.92);
-}
-
-export function createSamplePdfBytes(
-  title: string,
-  subtitle: string,
-  pages: string[]
-): { bytes: Uint8Array; pageCount: number; thumbnailDataUrl: string } {
-  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true });
-  pages.forEach((body, idx) => {
-    if (idx > 0) doc.addPage();
-    doc.setFillColor(248, 250, 252);
-    doc.rect(0, 0, 210, 297, 'F');
-    doc.setFillColor(255, 255, 255);
-    doc.rect(14, 14, 182, 269, 'F');
-    doc.setDrawColor(226, 232, 240);
-    doc.rect(14, 14, 182, 269, 'S');
-
-    doc.setTextColor(15, 23, 42);
-    doc.setFontSize(18);
-    doc.text(title, 24, 34);
-
-    doc.setTextColor(37, 99, 235);
-    doc.setFontSize(11);
-    doc.text(`${subtitle} — Page ${idx + 1} of ${pages.length}`, 24, 44);
-
-    doc.setDrawColor(37, 99, 235);
-    doc.line(24, 49, 186, 49);
-
-    doc.setTextColor(51, 65, 85);
-    doc.setFontSize(11);
-    const wrapped = doc.splitTextToSize(body, 160);
-    doc.text(wrapped, 24, 62);
-  });
-
-  const bytes = new Uint8Array(doc.output('arraybuffer'));
-  const thumb = createSampleDocumentImage(idxVariant(title));
-  return {
-    bytes,
-    pageCount: pages.length,
-    thumbnailDataUrl: thumb,
-  };
-}
-
-function idxVariant(title: string): 'invoice' | 'receipt' | 'contract' {
-  const lower = title.toLowerCase();
-  if (lower.includes('receipt')) return 'receipt';
-  if (lower.includes('nda') || lower.includes('agreement')) return 'contract';
-  return 'invoice';
 }

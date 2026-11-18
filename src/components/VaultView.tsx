@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Archive,
   CheckSquare,
@@ -8,6 +8,8 @@ import {
   LayoutGrid,
   LayoutList,
   Lock,
+  MoreVertical,
+  Pencil,
   Plus,
   Printer,
   Search,
@@ -51,12 +53,22 @@ interface VaultViewProps {
   onPrint: (doc: VaultDocument) => void;
   onRequestLockToggle: (doc: VaultDocument) => void;
   onUpdateTags: (doc: VaultDocument, nextTags: string[]) => Promise<void>;
+  onRename: (doc: VaultDocument, nextName: string) => Promise<void>;
+  onScanFirst: () => void;
   onExportZip: () => Promise<void>;
   onExportSelectedZip: (selectedDocs: VaultDocument[]) => Promise<void>;
   onDownload: (doc: VaultDocument) => void;
   onDelete: (doc: VaultDocument) => void;
   onBulkDelete: (ids: string[]) => Promise<void>;
 }
+
+const CATEGORY_CHIPS = [
+  { id: 'all', label: 'All' },
+  { id: 'tag:Finance', label: 'Finance' },
+  { id: 'tag:Work', label: 'Work' },
+  { id: 'tag:Personal', label: 'Personal' },
+  { id: 'tag:IDs', label: 'IDs' },
+] as const;
 
 export const VaultView: React.FC<VaultViewProps> = ({
   docs,
@@ -66,6 +78,7 @@ export const VaultView: React.FC<VaultViewProps> = ({
   onPrint,
   onRequestLockToggle,
   onUpdateTags,
+  onRename,
   onExportZip,
   onExportSelectedZip,
   onDownload,
@@ -83,8 +96,35 @@ export const VaultView: React.FC<VaultViewProps> = ({
   const [filter, setFilter] = useState('all');
   const [sortBy, setSortBy] = useState<VaultSortOption>('newest');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [menuDocId, setMenuDocId] = useState<string | null>(null);
+  const [renamingInMenu, setRenamingInMenu] = useState(false);
+  const [renameDraft, setRenameDraft] = useState('');
+  const [savingRename, setSavingRename] = useState(false);
   const [editingTagsId, setEditingTagsId] = useState<string | null>(null);
   const [customTagInput, setCustomTagInput] = useState('');
+
+  const menuDoc = useMemo(
+    () => (menuDocId ? docs.find((d) => d.id === menuDocId) ?? null : null),
+    [docs, menuDocId]
+  );
+
+  const closeMenu = () => {
+    setMenuDocId(null);
+    setConfirmDeleteId(null);
+    setRenamingInMenu(false);
+    setRenameDraft('');
+  };
+
+  useEffect(() => {
+    if (!menuDocId) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        closeMenu();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [menuDocId]);
 
   const handleSetLayoutMode = (next: VaultLayoutMode) => {
     setLayoutMode(next);
@@ -144,6 +184,7 @@ export const VaultView: React.FC<VaultViewProps> = ({
         setConfirmBulkDelete(false);
       } else {
         setConfirmDeleteId(null);
+        setMenuDocId(null);
         setEditingTagsId(null);
       }
       return next;
@@ -251,23 +292,23 @@ export const VaultView: React.FC<VaultViewProps> = ({
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2.5">
+    <div className="space-y-3 sm:space-y-4 select-none">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h2 className="text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100">
+          <h2 className="text-[15px] sm:text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100">
             {t.vault.title}
           </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 tabular-nums mt-0.5">
+          <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 tabular-nums mt-0.5">
             {docs.length} {docs.length === 1 ? t.vault.fileLabel : t.vault.filesLabel} · {formatFileSize(totalBytes)} {t.vault.storedLocally}
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 shrink-0">
+        <div className="flex flex-wrap items-center gap-1.5 shrink-0">
           {/* List / Grid Layout Switcher */}
           <div
             role="group"
             aria-label={t.vault.layoutToggleLabel}
-            className="inline-flex items-center gap-0.5 p-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+            className="inline-flex items-center gap-0.5 p-0.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
           >
             <button
               type="button"
@@ -275,7 +316,7 @@ export const VaultView: React.FC<VaultViewProps> = ({
               aria-pressed={layoutMode === 'list'}
               aria-label={t.vault.listView}
               title={t.vault.listView}
-              className={`min-h-[34px] px-2.5 py-1 rounded-lg text-xs font-semibold inline-flex items-center gap-1 transition-colors ${
+              className={`min-h-[32px] px-2 py-1 rounded-lg text-xs font-semibold inline-flex items-center gap-1 transition-colors ${
                 layoutMode === 'list'
                   ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-sm'
                   : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
@@ -290,7 +331,7 @@ export const VaultView: React.FC<VaultViewProps> = ({
               aria-pressed={layoutMode === 'grid'}
               aria-label={t.vault.gridView}
               title={t.vault.gridView}
-              className={`min-h-[34px] px-2.5 py-1 rounded-lg text-xs font-semibold inline-flex items-center gap-1 transition-colors ${
+              className={`min-h-[32px] px-2 py-1 rounded-lg text-xs font-semibold inline-flex items-center gap-1 transition-colors ${
                 layoutMode === 'grid'
                   ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-sm'
                   : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
@@ -306,7 +347,7 @@ export const VaultView: React.FC<VaultViewProps> = ({
             disabled={docs.length === 0}
             onClick={toggleSelectionMode}
             aria-pressed={selectionMode}
-            className={`min-h-[42px] px-3 py-2 rounded-xl border text-xs font-semibold inline-flex items-center gap-1.5 shrink-0 transition-colors disabled:opacity-50 ${
+            className={`min-h-[36px] sm:min-h-[40px] px-2.5 sm:px-3 py-1.5 rounded-xl border text-xs font-semibold inline-flex items-center gap-1.5 shrink-0 transition-all active:scale-95 disabled:opacity-50 ${
               selectionMode
                 ? 'border-blue-600 bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300'
                 : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800'
@@ -320,7 +361,7 @@ export const VaultView: React.FC<VaultViewProps> = ({
             type="button"
             disabled={docs.length === 0 || exportingZip}
             onClick={handleZipClick}
-            className="min-h-[42px] px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-semibold inline-flex items-center gap-1.5 shrink-0"
+            className="min-h-[36px] sm:min-h-[40px] px-2.5 sm:px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-50 text-white text-xs font-semibold inline-flex items-center gap-1.5 shrink-0"
           >
             <Archive className="w-3.5 h-3.5" />
             <span>{exportingZip ? t.vault.exportingZip : t.vault.exportZip}</span>
@@ -328,10 +369,10 @@ export const VaultView: React.FC<VaultViewProps> = ({
         </div>
       </div>
 
-      {/* Search + Filter & Sort Dropdowns */}
-      <div className="space-y-2.5">
+      {/* Instant Search Bar + Category Filter Chips + Filter/Sort */}
+      <div className="space-y-2">
         <div className="relative">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           <label htmlFor="vault-search-input" className="sr-only">
             {t.vault.searchPlaceholder}
           </label>
@@ -341,20 +382,56 @@ export const VaultView: React.FC<VaultViewProps> = ({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={t.vault.searchPlaceholder}
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-sm text-slate-900 dark:text-slate-100 focus:outline-2 focus:outline-blue-600"
+            className="w-full pl-9 pr-9 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 text-[13px] sm:text-sm text-slate-900 dark:text-slate-100 focus:outline-2 focus:outline-blue-600"
           />
+          {query && (
+            <button
+              type="button"
+              onClick={() => setQuery('')}
+              aria-label="Clear search"
+              className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 flex items-center justify-center"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
 
-        <div className="grid grid-cols-2 gap-2.5">
+        {/* Category Filter Chips (All, Finance, Work, Personal, IDs) */}
+        <div
+          role="group"
+          aria-label="Category filter chips"
+          className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5"
+        >
+          {CATEGORY_CHIPS.map((chip) => {
+            const isActive = filter === chip.id;
+            return (
+              <button
+                key={chip.id}
+                type="button"
+                aria-pressed={isActive}
+                onClick={() => setFilter(chip.id)}
+                className={`min-h-[32px] px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap shrink-0 transition-all active:scale-95 ${
+                  isActive
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : 'bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700'
+                }`}
+              >
+                {chip.id === 'all' ? `${chip.label} (${docs.length})` : chip.label}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
           <div>
-            <label htmlFor="vault-filter-select" className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
+            <label htmlFor="vault-filter-select" className="block text-[10.5px] font-semibold text-slate-500 dark:text-slate-400 mb-0.5">
               {t.vault.filterLabel}
             </label>
             <select
               id="vault-filter-select"
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
-              className="w-full min-h-[42px] px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs sm:text-sm font-medium text-slate-800 dark:text-slate-100"
+              className="w-full min-h-[38px] px-2.5 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 text-xs sm:text-sm font-medium text-slate-800 dark:text-slate-100"
             >
               <option value="all">{t.vault.allFiles} ({docs.length})</option>
               <optgroup label="Tags">
@@ -378,14 +455,14 @@ export const VaultView: React.FC<VaultViewProps> = ({
           </div>
 
           <div>
-            <label htmlFor="vault-sort-select" className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
+            <label htmlFor="vault-sort-select" className="block text-[10.5px] font-semibold text-slate-500 dark:text-slate-400 mb-0.5">
               {t.vault.sortLabel}
             </label>
             <select
               id="vault-sort-select"
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as VaultSortOption)}
-              className="w-full min-h-[42px] px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs sm:text-sm font-medium text-slate-800 dark:text-slate-100"
+              className="w-full min-h-[38px] px-2.5 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 text-xs sm:text-sm font-medium text-slate-800 dark:text-slate-100"
             >
               <option value="newest">Newest First</option>
               <option value="oldest">Oldest First</option>
@@ -469,25 +546,33 @@ export const VaultView: React.FC<VaultViewProps> = ({
       )}
 
       {/* File List or Visual Grid/Gallery */}
-      {displayedDocs.length === 0 ? (
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-8 text-center">
-          <FileText className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
-          <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+      {docs.length === 0 ? null : displayedDocs.length === 0 ? (
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl px-4 py-6 text-center flex flex-col items-center">
+          <p className="text-sm font-bold text-slate-800 dark:text-slate-100">
             {t.vault.noMatchesTitle}
           </p>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            {query || filter !== 'all'
-              ? t.vault.noMatchesClear
-              : t.vault.noMatchesEmpty}
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-xs leading-relaxed">
+            {t.vault.noMatchesClear}
           </p>
+          {(query || filter !== 'all') && (
+            <button
+              type="button"
+              onClick={() => {
+                setQuery('');
+                setFilter('all');
+              }}
+              className="mt-3 min-h-[36px] px-4 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 active:scale-95 transition-all"
+            >
+              {t.vault.clearFilters}
+            </button>
+          )}
         </div>
       ) : layoutMode === 'grid' ? (
         <div
           data-vault-layout="grid"
-          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3"
+          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 sm:gap-3"
         >
           {displayedDocs.map((doc) => {
-            const isConfirming = confirmDeleteId === doc.id;
             const isEditingTags = editingTagsId === doc.id;
             const isSelected = activeSelectedIds.includes(doc.id);
             const docTags = doc.tags || [];
@@ -498,10 +583,10 @@ export const VaultView: React.FC<VaultViewProps> = ({
                 className={`bg-white dark:bg-slate-900 rounded-2xl overflow-hidden shadow-sm flex flex-col justify-between border transition-colors ${
                   selectionMode && isSelected
                     ? 'border-blue-600 ring-2 ring-blue-500/25'
-                    : 'border-slate-200 dark:border-slate-800'
+                    : 'border-slate-200/90 dark:border-slate-800'
                 }`}
               >
-                {/* Large Visual Thumbnail Area */}
+                {/* Visual Thumbnail Area */}
                 <div className="relative">
                   {selectionMode && (
                     <label
@@ -534,21 +619,21 @@ export const VaultView: React.FC<VaultViewProps> = ({
                       />
                     ) : doc.isLocked ? (
                       <div className="p-3 text-center space-y-1.5">
-                        <div className="w-11 h-11 rounded-2xl bg-amber-100 dark:bg-amber-950/70 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto">
-                          <Lock className="w-5 h-5" />
+                        <div className="w-10 h-10 rounded-2xl bg-amber-100 dark:bg-amber-950/70 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto">
+                          <Lock className="w-4.5 h-4.5" />
                         </div>
                         <div className="text-[11px] font-semibold text-amber-700 dark:text-amber-300">
                           AES {t.common.locked}
                         </div>
                       </div>
                     ) : doc.textPreview ? (
-                      <div className="w-full h-full p-3 bg-white dark:bg-slate-900/90 text-[10px] leading-relaxed text-slate-600 dark:text-slate-300 overflow-hidden font-mono">
+                      <div className="w-full h-full p-2.5 bg-white dark:bg-slate-900/90 text-[10px] leading-relaxed text-slate-600 dark:text-slate-300 overflow-hidden font-mono">
                         {doc.textPreview.slice(0, 220)}
                       </div>
                     ) : (
                       <div className="p-3 text-center space-y-1.5">
-                        <div className="w-11 h-11 rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center mx-auto">
-                          <FileText className="w-5 h-5" />
+                        <div className="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center mx-auto">
+                          <FileText className="w-4.5 h-4.5" />
                         </div>
                         <div className="text-[11px] font-semibold uppercase text-slate-500 dark:text-slate-400">
                           {doc.category}
@@ -558,127 +643,66 @@ export const VaultView: React.FC<VaultViewProps> = ({
                   </button>
                 </div>
 
-                {/* Card Details & Actions */}
-                <div className="p-2.5 sm:p-3 space-y-2 flex-1 flex flex-col justify-between">
-                  <div>
+                {/* Compact Card Footer: Title, Concise Metadata, Share & More */}
+                <div className="p-2.5 space-y-2">
+                  <div className="flex items-start justify-between gap-1">
                     <button
                       type="button"
                       onClick={() =>
                         selectionMode ? handleToggleSelectDoc(doc.id) : onPreview(doc)
                       }
-                      className="w-full text-left"
+                      className="min-w-0 flex-1 text-left"
                     >
-                      <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 truncate">
+                      <h3 className="text-xs sm:text-[13px] font-bold text-slate-900 dark:text-slate-100 truncate">
                         {doc.name}
                       </h3>
+                      <div className="text-[10.5px] text-slate-500 dark:text-slate-400 mt-0.5 tabular-nums truncate">
+                        {docTags.length > 0 && (
+                          <span className="font-semibold text-blue-600 dark:text-blue-400">
+                            {docTags[0]}{docTags.length > 1 ? ` +${docTags.length - 1}` : ''} ·{' '}
+                          </span>
+                        )}
+                        {doc.pageCount} {doc.pageCount === 1 ? t.common.page : t.common.pages} · {formatFileSize(doc.size)}
+                      </div>
                     </button>
-                    <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 tabular-nums truncate">
-                      {doc.pageCount} {doc.pageCount === 1 ? t.common.page : t.common.pages} · {formatFileSize(doc.size)}
-                    </div>
-                    <div className="mt-1 flex items-center justify-between gap-1">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setCustomTagInput('');
-                          setEditingTagsId(isEditingTags ? null : doc.id);
-                        }}
-                        aria-expanded={isEditingTags}
-                        aria-label={`Tags for ${doc.name}`}
-                        className="text-[11px] font-semibold text-blue-600 dark:text-blue-400 hover:underline truncate inline-flex items-center gap-1"
-                      >
-                        <Tag className="w-3 h-3 shrink-0" />
-                        <span className="truncate">
-                          {docTags.length > 0 ? docTags.join(', ') : `+ ${t.vault.tagsBtn}`}
-                        </span>
-                      </button>
-                    </div>
+
+                    {!selectionMode && (
+                      <div className="flex items-center shrink-0 -mr-1">
+                        <button
+                          type="button"
+                          onClick={() => onShare(doc)}
+                          aria-label={`Share ${doc.name}`}
+                          title={t.common.share}
+                          className="w-8 h-8 rounded-lg text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800 active:scale-95 flex items-center justify-center transition-all"
+                        >
+                          <Share2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setConfirmDeleteId(null);
+                            setMenuDocId(doc.id);
+                          }}
+                          aria-label={`More actions for ${doc.name}`}
+                          aria-haspopup="menu"
+                          aria-expanded={menuDocId === doc.id}
+                          className="w-8 h-8 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 active:scale-95 flex items-center justify-center transition-all"
+                        >
+                          <MoreVertical className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   {isEditingTags && renderTagOrganizer(doc)}
-
-                  {isConfirming ? (
-                    <div className="flex items-center gap-1.5 pt-1.5 border-t border-slate-100 dark:border-slate-800">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          onDelete(doc);
-                          setConfirmDeleteId(null);
-                        }}
-                        aria-label={`Confirm delete ${doc.name}`}
-                        className="flex-1 min-h-[34px] px-2 py-1 rounded-lg bg-red-600 hover:bg-red-700 text-white text-[11px] font-semibold"
-                      >
-                        {t.common.confirm}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setConfirmDeleteId(null)}
-                        className="flex-1 min-h-[34px] px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700 text-[11px] font-semibold"
-                      >
-                        {t.common.cancel}
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="pt-1.5 border-t border-slate-100 dark:border-slate-800 grid grid-cols-4 gap-1">
-                      <button
-                        type="button"
-                        onClick={() => onDownload(doc)}
-                        aria-label={`Download ${doc.name}`}
-                        title={t.common.save}
-                        className="min-h-[36px] rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-blue-600 hover:text-white text-slate-700 dark:text-slate-200 flex items-center justify-center transition-colors"
-                      >
-                        <Download className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => onShare(doc)}
-                        aria-label={`Share ${doc.name}`}
-                        title={t.common.share}
-                        className="min-h-[36px] rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-center transition-colors"
-                      >
-                        <Share2 className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => onRequestLockToggle(doc)}
-                        aria-label={doc.isLocked ? `Unlock ${doc.name}` : `Lock ${doc.name}`}
-                        title={doc.isLocked ? t.common.unlock : t.common.lock}
-                        className={`min-h-[36px] rounded-lg border flex items-center justify-center transition-colors ${
-                          doc.isLocked
-                            ? 'border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300'
-                            : 'border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800'
-                        }`}
-                      >
-                        {doc.isLocked ? (
-                          <Unlock className="w-3.5 h-3.5" />
-                        ) : (
-                          <Lock className="w-3.5 h-3.5" />
-                        )}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setConfirmDeleteId(doc.id)}
-                        aria-label={`Delete ${doc.name}`}
-                        title={t.common.delete}
-                        className="min-h-[36px] rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 flex items-center justify-center transition-colors"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  )}
                 </div>
               </article>
             );
           })}
         </div>
       ) : (
-        <div data-vault-layout="list" className="space-y-3">
+        <div data-vault-layout="list" className="space-y-2">
           {displayedDocs.map((doc) => {
-            const formattedDate = new Date(doc.updatedAt).toLocaleDateString(undefined, {
-              month: 'short',
-              day: 'numeric',
-              year: 'numeric',
-            });
-            const isConfirming = confirmDeleteId === doc.id;
             const isEditingTags = editingTagsId === doc.id;
             const isSelected = activeSelectedIds.includes(doc.id);
             const docTags = doc.tags || [];
@@ -686,14 +710,14 @@ export const VaultView: React.FC<VaultViewProps> = ({
             return (
               <article
                 key={doc.id}
-                className={`rounded-2xl p-3.5 sm:p-4 shadow-sm space-y-2.5 border transition-colors ${
+                className={`rounded-2xl px-3 py-2.5 sm:px-3.5 sm:py-3 shadow-xs space-y-2.5 border transition-colors ${
                   selectionMode && isSelected
                     ? 'bg-blue-50/40 dark:bg-blue-950/20 border-blue-600 ring-2 ring-blue-500/20'
-                    : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800'
+                    : 'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800'
                 }`}
               >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                <div className="flex items-center justify-between gap-2.5">
+                  <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
                     {selectionMode && (
                       <label className="min-w-[32px] min-h-[32px] flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer shrink-0">
                         <input
@@ -705,14 +729,15 @@ export const VaultView: React.FC<VaultViewProps> = ({
                         />
                       </label>
                     )}
+
                     <button
                       type="button"
                       onClick={() =>
                         selectionMode ? handleToggleSelectDoc(doc.id) : onPreview(doc)
                       }
-                      className="flex items-center gap-3 min-w-0 flex-1 text-left"
+                      className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1 text-left active:opacity-80 transition-opacity"
                     >
-                      <div className="w-10 h-11 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center shrink-0 overflow-hidden">
+                      <div className="w-10 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 flex items-center justify-center shrink-0 overflow-hidden">
                         {doc.thumbnailDataUrl && !doc.isLocked ? (
                           <img
                             src={doc.thumbnailDataUrl}
@@ -720,173 +745,334 @@ export const VaultView: React.FC<VaultViewProps> = ({
                             className="w-full h-full object-cover"
                           />
                         ) : doc.isLocked ? (
-                          <Lock className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                          <Lock className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                         ) : (
-                          <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                          <FileText className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                         )}
                       </div>
+
                       <div className="min-w-0 flex-1">
-                        <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100 truncate">
+                        <h3 className="text-[13px] sm:text-sm font-bold text-slate-900 dark:text-slate-100 truncate">
                           {doc.name}
                         </h3>
-                      <div className="text-xs text-slate-500 dark:text-slate-400 flex flex-wrap items-center gap-1.5 mt-0.5 tabular-nums">
-                        {docTags.length > 0 && (
-                          <>
-                            <span className="font-semibold text-blue-600 dark:text-blue-400">
-                              {docTags.join(', ')}
-                            </span>
-                            <span aria-hidden="true">·</span>
-                          </>
-                        )}
-                        <span className="capitalize">{doc.category}</span>
-                        <span aria-hidden="true">·</span>
-                        <span>
-                          {doc.pageCount} {doc.pageCount === 1 ? t.common.page : t.common.pages}
-                        </span>
-                        <span aria-hidden="true">·</span>
-                        <span>{formatFileSize(doc.size)}</span>
-                        <span aria-hidden="true">·</span>
-                        <span>{formattedDate}</span>
-                        {doc.isLocked && (
-                          <>
-                            <span aria-hidden="true">·</span>
-                            <span className="font-semibold text-amber-600 dark:text-amber-400">
-                              AES {t.common.locked}
-                            </span>
-                          </>
-                        )}
-                      </div>
+                        <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mt-0.5 tabular-nums truncate">
+                          {docTags.length > 0 && (
+                            <>
+                              <span className="font-semibold text-blue-600 dark:text-blue-400 truncate max-w-[110px]">
+                                {docTags.join(', ')}
+                              </span>
+                              <span aria-hidden="true">·</span>
+                            </>
+                          )}
+                          <span className="shrink-0">
+                            {doc.pageCount} {doc.pageCount === 1 ? t.common.page : t.common.pages}
+                          </span>
+                          <span aria-hidden="true">·</span>
+                          <span className="shrink-0">{formatFileSize(doc.size)}</span>
+                          {doc.isLocked && (
+                            <>
+                              <span aria-hidden="true">·</span>
+                              <span className="font-semibold text-amber-600 dark:text-amber-400 shrink-0">
+                                {t.common.locked}
+                              </span>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </button>
                   </div>
 
                   {!selectionMode && (
-                    <button
-                      type="button"
-                      onClick={() => onDownload(doc)}
-                      aria-label={`Download ${doc.name}`}
-                      className="min-h-[40px] px-3 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-blue-600 hover:text-white text-slate-700 dark:text-slate-200 text-xs font-semibold inline-flex items-center gap-1.5 shrink-0 transition-colors"
-                    >
-                      <Download className="w-3.5 h-3.5" />
-                      <span>{t.common.save}</span>
-                    </button>
-                  )}
-                </div>
+                    <div className="flex items-center gap-0.5 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => onShare(doc)}
+                        aria-label={`Share ${doc.name}`}
+                        title={t.common.share}
+                        className="w-9 h-9 rounded-xl text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800 active:scale-95 flex items-center justify-center transition-all"
+                      >
+                        <Share2 className="w-4 h-4" />
+                      </button>
 
-                {/* Inline Tag Organizer Panel (when opened) */}
-                {isEditingTags && renderTagOrganizer(doc)}
-
-                {/* Real Actions Row */}
-                <div className="pt-2.5 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-1.5">
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => onPreview(doc)}
-                      aria-label={`Preview ${doc.name}`}
-                      className="min-h-[38px] px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center gap-1"
-                    >
-                      <Eye className="w-3.5 h-3.5" />
-                      <span>{t.common.open}</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setCustomTagInput('');
-                        setEditingTagsId(isEditingTags ? null : doc.id);
-                      }}
-                      aria-expanded={isEditingTags}
-                      aria-label={`Tags for ${doc.name}`}
-                      className={`min-h-[38px] px-2.5 py-1.5 rounded-lg border text-xs font-semibold inline-flex items-center gap-1 ${
-                        isEditingTags
-                          ? 'border-blue-600 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300'
-                          : 'border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800'
-                      }`}
-                    >
-                      <Tag className="w-3.5 h-3.5" />
-                      <span>{t.vault.tagsBtn}</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => onShare(doc)}
-                      aria-label={`Share ${doc.name}`}
-                      className="min-h-[38px] px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center gap-1"
-                    >
-                      <Share2 className="w-3.5 h-3.5" />
-                      <span>{t.common.share}</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => onPrint(doc)}
-                      aria-label={`Print ${doc.name}`}
-                      className="min-h-[38px] px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center gap-1"
-                    >
-                      <Printer className="w-3.5 h-3.5" />
-                      <span>{t.common.print}</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => onRequestLockToggle(doc)}
-                      aria-label={doc.isLocked ? `Unlock ${doc.name}` : `Lock ${doc.name}`}
-                      className={`min-h-[38px] px-2.5 py-1.5 rounded-lg border text-xs font-semibold inline-flex items-center gap-1 ${
-                        doc.isLocked
-                          ? 'border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300'
-                          : 'border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800'
-                      }`}
-                    >
-                      {doc.isLocked ? (
-                        <>
-                          <Unlock className="w-3.5 h-3.5" />
-                          <span>{t.common.unlock}</span>
-                        </>
-                      ) : (
-                        <>
-                          <Lock className="w-3.5 h-3.5" />
-                          <span>{t.common.lock}</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-
-                  {isConfirming ? (
-                    <div className="flex items-center gap-1.5">
                       <button
                         type="button"
                         onClick={() => {
-                          onDelete(doc);
                           setConfirmDeleteId(null);
+                          setMenuDocId(doc.id);
                         }}
-                        aria-label={`Confirm delete ${doc.name}`}
-                        className="min-h-[38px] px-2.5 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-semibold"
+                        aria-label={`More actions for ${doc.name}`}
+                        aria-haspopup="menu"
+                        aria-expanded={menuDocId === doc.id}
+                        className="w-9 h-9 rounded-xl text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 active:scale-95 flex items-center justify-center transition-all"
                       >
-                        {t.common.confirm}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setConfirmDeleteId(null)}
-                        className="min-h-[38px] px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-semibold"
-                      >
-                        {t.common.cancel}
+                        <MoreVertical className="w-4 h-4" />
                       </button>
                     </div>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => setConfirmDeleteId(doc.id)}
-                      aria-label={`Delete ${doc.name}`}
-                      className="min-h-[38px] px-2.5 py-1.5 rounded-lg text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 inline-flex items-center gap-1"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      <span>{t.common.delete}</span>
-                    </button>
                   )}
                 </div>
+
+                {/* Inline Tag Organizer Panel (opened from three-dot menu) */}
+                {isEditingTags && renderTagOrganizer(doc)}
               </article>
             );
           })}
+        </div>
+      )}
+
+      {/* Sleek Native Bottom-Sheet / Action Menu for Card Actions */}
+      {menuDoc && (
+        <div
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-950/45 backdrop-blur-[1px] sm:p-4"
+          onClick={closeMenu}
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Actions for ${menuDoc.name}`}
+        >
+          <div
+            className="w-full sm:max-w-xs bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-2xl border-t sm:border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden pb-safe"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Mobile Drag Handle */}
+            <div className="sm:hidden flex justify-center pt-2.5 pb-1">
+              <div className="w-9 h-1 rounded-full bg-slate-300 dark:bg-slate-700" />
+            </div>
+
+            {/* File Details Summary Header */}
+            <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 flex items-center gap-3">
+              <div className="w-9 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center shrink-0 overflow-hidden">
+                {menuDoc.thumbnailDataUrl && !menuDoc.isLocked ? (
+                  <img
+                    src={menuDoc.thumbnailDataUrl}
+                    alt={menuDoc.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : menuDoc.isLocked ? (
+                  <Lock className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                ) : (
+                  <FileText className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">
+                  {menuDoc.name}
+                </div>
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 tabular-nums truncate">
+                  <span className="capitalize">{menuDoc.category}</span> · {menuDoc.pageCount}{' '}
+                  {menuDoc.pageCount === 1 ? t.common.page : t.common.pages} ·{' '}
+                  {formatFileSize(menuDoc.size)}
+                </div>
+                <div className="text-[10.5px] text-slate-400 dark:text-slate-500 tabular-nums truncate">
+                  {new Date(menuDoc.updatedAt).toLocaleDateString(undefined, {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })}
+                  {menuDoc.isLocked ? ` · AES ${t.common.locked}` : ''}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={closeMenu}
+                aria-label={t.common.cancel}
+                className="w-8 h-8 rounded-full text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center shrink-0"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {renamingInMenu ? (
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  if (!renameDraft.trim()) return;
+                  setSavingRename(true);
+                  try {
+                    await onRename(menuDoc, renameDraft);
+                    closeMenu();
+                  } finally {
+                    setSavingRename(false);
+                  }
+                }}
+                className="p-4 space-y-3"
+              >
+                <label
+                  htmlFor="vault-rename-input"
+                  className="block text-xs font-bold text-slate-700 dark:text-slate-200"
+                >
+                  {t.vault.renamePdf}
+                </label>
+                <input
+                  id="vault-rename-input"
+                  type="text"
+                  autoFocus
+                  maxLength={80}
+                  value={renameDraft}
+                  onChange={(e) => setRenameDraft(e.target.value)}
+                  placeholder={t.vault.renamePlaceholder}
+                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-900 dark:text-slate-100 focus:outline-2 focus:outline-blue-600"
+                />
+                <div className="flex items-center gap-2">
+                  <button
+                    type="submit"
+                    disabled={savingRename || !renameDraft.trim()}
+                    className="flex-1 min-h-[42px] px-3 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-semibold active:scale-95 transition-all"
+                  >
+                    {t.common.save}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={savingRename}
+                    onClick={() => {
+                      setRenamingInMenu(false);
+                      setRenameDraft('');
+                    }}
+                    className="flex-1 min-h-[42px] px-3 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200"
+                  >
+                    {t.common.cancel}
+                  </button>
+                </div>
+              </form>
+            ) : (
+              /* Menu Action Rows */
+              <div role="menu" className="p-2 space-y-0.5">
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    const target = menuDoc;
+                    closeMenu();
+                    onPreview(target);
+                  }}
+                  className="w-full min-h-[44px] px-3 rounded-xl text-left text-sm font-medium text-slate-800 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 active:bg-slate-200/70 dark:active:bg-slate-700/70 flex items-center gap-3 transition-colors"
+                >
+                  <Eye className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
+                  <span>{t.common.open}</span>
+                </button>
+
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    setRenameDraft(menuDoc.name);
+                    setRenamingInMenu(true);
+                  }}
+                  className="w-full min-h-[44px] px-3 rounded-xl text-left text-sm font-medium text-slate-800 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 active:bg-slate-200/70 dark:active:bg-slate-700/70 flex items-center gap-3 transition-colors"
+                >
+                  <Pencil className="w-4 h-4 text-slate-600 dark:text-slate-300 shrink-0" />
+                  <span>{t.vault.renamePdf}</span>
+                </button>
+
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    const targetId = menuDoc.id;
+                    setCustomTagInput('');
+                    setEditingTagsId(editingTagsId === targetId ? null : targetId);
+                    closeMenu();
+                  }}
+                  className="w-full min-h-[44px] px-3 rounded-xl text-left text-sm font-medium text-slate-800 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 active:bg-slate-200/70 dark:active:bg-slate-700/70 flex items-center justify-between gap-3 transition-colors"
+                >
+                  <span className="flex items-center gap-3">
+                    <Tag className="w-4 h-4 text-slate-600 dark:text-slate-300 shrink-0" />
+                    <span>{t.vault.tagsBtn}</span>
+                  </span>
+                  {(menuDoc.tags?.length ?? 0) > 0 && (
+                    <span className="text-[11px] font-semibold text-blue-600 dark:text-blue-400 truncate max-w-[110px]">
+                      {menuDoc.tags?.join(', ')}
+                    </span>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    const target = menuDoc;
+                    closeMenu();
+                    onDownload(target);
+                  }}
+                  className="w-full min-h-[44px] px-3 rounded-xl text-left text-sm font-medium text-slate-800 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 active:bg-slate-200/70 dark:active:bg-slate-700/70 flex items-center gap-3 transition-colors"
+                >
+                  <Download className="w-4 h-4 text-slate-600 dark:text-slate-300 shrink-0" />
+                  <span>{t.common.save}</span>
+                </button>
+
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    const target = menuDoc;
+                    closeMenu();
+                    onPrint(target);
+                  }}
+                  className="w-full min-h-[44px] px-3 rounded-xl text-left text-sm font-medium text-slate-800 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 active:bg-slate-200/70 dark:active:bg-slate-700/70 flex items-center gap-3 transition-colors"
+                >
+                  <Printer className="w-4 h-4 text-slate-600 dark:text-slate-300 shrink-0" />
+                  <span>{t.common.print}</span>
+                </button>
+
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    const target = menuDoc;
+                    closeMenu();
+                    onRequestLockToggle(target);
+                  }}
+                  className="w-full min-h-[44px] px-3 rounded-xl text-left text-sm font-medium text-slate-800 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 active:bg-slate-200/70 dark:active:bg-slate-700/70 flex items-center gap-3 transition-colors"
+                >
+                  {menuDoc.isLocked ? (
+                    <>
+                      <Unlock className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                      <span>{t.common.unlock}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Lock className="w-4 h-4 text-slate-600 dark:text-slate-300 shrink-0" />
+                      <span>{t.common.lock}</span>
+                    </>
+                  )}
+                </button>
+
+                <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
+
+                {confirmDeleteId === menuDoc.id ? (
+                  <div className="flex items-center gap-2 p-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const target = menuDoc;
+                        closeMenu();
+                        onDelete(target);
+                      }}
+                      aria-label={`Confirm delete ${menuDoc.name}`}
+                      className="flex-1 min-h-[42px] px-3 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-semibold"
+                    >
+                      {t.common.confirm} {t.common.delete}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setConfirmDeleteId(null)}
+                      className="flex-1 min-h-[42px] px-3 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200"
+                    >
+                      {t.common.cancel}
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => setConfirmDeleteId(menuDoc.id)}
+                    className="w-full min-h-[44px] px-3 rounded-xl text-left text-sm font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 active:bg-red-100/70 flex items-center gap-3 transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4 shrink-0" />
+                    <span>{t.common.delete}</span>
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

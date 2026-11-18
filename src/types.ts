@@ -24,7 +24,7 @@ export type WatermarkColor = 'slate' | 'blue' | 'red';
 
 export type VaultSortOption = 'newest' | 'oldest' | 'name-asc' | 'size-desc' | 'size-asc';
 
-export const PRESET_TAGS = ['Work', 'Personal', 'Finance'] as const;
+export const PRESET_TAGS = ['Finance', 'Work', 'Personal', 'IDs'] as const;
 
 export type CompressionPreset = 'high' | 'medium' | 'extreme';
 

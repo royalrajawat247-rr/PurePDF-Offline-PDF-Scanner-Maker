@@ -34,6 +34,7 @@ export interface Translations {
     openVault: string;
     noSavedDocs: string;
     noSavedDocsHint: string;
+    scanFirstDoc: string;
   };
   toolsHub: {
     title: string;
@@ -65,6 +66,9 @@ export interface Translations {
     deselectAll: string;
     exportSelectedZip: string;
     confirmBulkDelete: string;
+    renamePdf: string;
+    renamePlaceholder: string;
+    clearFilters: string;
   };
   settings: {
     title: string;
@@ -171,8 +175,9 @@ const EN_TRANSLATIONS: Translations = {
     recentSavedFiles: 'Recent Saved Files',
     recentSubtitle: 'Stored privately in your on-device vault',
     openVault: 'Open Vault',
-    noSavedDocs: 'No saved documents yet',
-    noSavedDocsHint: 'Use Camera Doc Scan or Photo to PDF above to create your first offline file.',
+    noSavedDocs: 'No documents yet',
+    noSavedDocsHint: 'Scan a receipt, ID, or invoice locally on your phone with zero server uploads.',
+    scanFirstDoc: 'Scan Your First Document',
   },
   toolsHub: {
     title: 'Document Tools Hub',
@@ -213,6 +218,9 @@ const EN_TRANSLATIONS: Translations = {
     deselectAll: 'Deselect All',
     exportSelectedZip: 'Export as ZIP',
     confirmBulkDelete: 'Delete selected?',
+    renamePdf: 'Rename PDF',
+    renamePlaceholder: 'Enter file name...',
+    clearFilters: 'Clear Filters',
   },
   settings: {
     title: 'Settings & Privacy',
@@ -249,12 +257,12 @@ const EN_TRANSLATIONS: Translations = {
     pinFormatError: 'Enter a valid 4-digit numeric PIN (0-9).',
     dataPortabilityTitle: 'Vault Archive, Backup & Restore',
     dataPortabilityDesc: 'Export your entire File Vault as a standard ZIP archive or back up and restore anytime.',
-    exportZipBtn: 'Export Full Vault (ZIP)',
+    exportZipBtn: 'Export All PDFs (ZIP)',
     packingZip: 'Packing ZIP...',
     exportJsonBtn: 'Export Backup',
     exportingJson: 'Exporting...',
     restoreJsonBtn: 'Restore Backup',
-    shareSupportTitle: 'Share App & Install',
+    shareSupportTitle: 'Share PurePDF',
     shareAppBtn: 'Share PurePDF App',
     shareAppDesc: 'Invite friends & colleagues to scan PDFs 100% offline with zero ads tracking.',
     installPwaTitle: 'Install as Offline Mobile App',
@@ -320,7 +328,8 @@ const HI_TRANSLATIONS: Translations = {
     recentSubtitle: 'आपके डिवाइस के निजी ऑफ़लाइन वॉल्ट में सुरक्षित',
     openVault: 'वॉल्ट खोलें',
     noSavedDocs: 'अभी कोई सेव दस्तावेज़ नहीं है',
-    noSavedDocsHint: 'अपनी पहली ऑफ़लाइन PDF बनाने के लिए ऊपर कैमरा स्कैन या फ़ोटो से PDF चुनें।',
+    noSavedDocsHint: 'बिना सर्वर अपलोड के अपने फोन पर रसीद, ID या बिल तुरंत स्कैन करें।',
+    scanFirstDoc: 'अपना पहला दस्तावेज़ स्कैन करें',
   },
   toolsHub: {
     title: 'डॉक्यूमेंट टूल्स हब',
@@ -361,6 +370,9 @@ const HI_TRANSLATIONS: Translations = {
     deselectAll: 'चयन हटाएं',
     exportSelectedZip: 'ZIP एक्सपोर्ट',
     confirmBulkDelete: 'चयनित हटाएं?',
+    renamePdf: 'PDF का नाम बदलें',
+    renamePlaceholder: 'फ़ाइल का नाम लिखें...',
+    clearFilters: 'फ़िल्टर साफ़ करें',
   },
   settings: {
     title: 'सेटिंग्स और गोपनीयता',
@@ -397,12 +409,12 @@ const HI_TRANSLATIONS: Translations = {
     pinFormatError: 'कृपया 4 अंकों का मान्य PIN (0-9) दर्ज करें।',
     dataPortabilityTitle: 'वॉल्ट आर्काइव, बैकअप और रीस्टोर',
     dataPortabilityDesc: 'अपना पूरा फ़ाइल वॉल्ट ZIP के रूप में डाउनलोड करें या बैकअप सेव रखें।',
-    exportZipBtn: 'पूरा वॉल्ट एक्सपोर्ट (ZIP)',
+    exportZipBtn: 'सभी PDF एक्सपोर्ट करें (ZIP)',
     packingZip: 'ZIP तैयार हो रही है...',
     exportJsonBtn: 'बैकअप एक्सपोर्ट',
     exportingJson: 'एक्सपोर्ट हो रहा है...',
     restoreJsonBtn: 'बैकअप रीस्टोर करें',
-    shareSupportTitle: 'ऐप शेयर और इंस्टॉल',
+    shareSupportTitle: 'ऐप शेयर करें',
     shareAppBtn: 'PurePDF ऐप शेयर करें',
     shareAppDesc: 'दोस्तों को 100% ऑफ़लाइन और बिना लॉगिन PDF स्कैनिंग के लिए आमंत्रित करें।',
     installPwaTitle: 'ऑफ़लाइन मोबाइल ऐप इंस्टॉल करें',

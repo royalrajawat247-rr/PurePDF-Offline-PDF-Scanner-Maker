@@ -98,7 +98,7 @@ export const PinLockScreen: React.FC<PinLockScreenProps> = ({
       role="dialog"
       aria-modal="true"
       aria-label={t.pinScreen.title}
-      className="fixed inset-0 z-50 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col items-center justify-center px-5 py-6"
+      className="fixed inset-0 z-50 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col items-center justify-center px-5 py-6 select-none"
     >
       <div className="w-full max-w-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm text-center space-y-5">
         <div className="space-y-2">
@@ -150,7 +150,7 @@ export const PinLockScreen: React.FC<PinLockScreenProps> = ({
                   key={num}
                   type="button"
                   onClick={() => appendDigit(num)}
-                  className="h-13 rounded-2xl bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 active:bg-blue-50 dark:active:bg-blue-950/50 border border-slate-200 dark:border-slate-700 text-lg font-bold text-slate-900 dark:text-slate-100 transition-colors tabular-nums"
+                  className="h-13 rounded-2xl bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 active:bg-blue-50 dark:active:bg-blue-950/50 active:scale-95 border border-slate-200 dark:border-slate-700 text-lg font-bold text-slate-900 dark:text-slate-100 transition-all tabular-nums"
                 >
                   {num}
                 </button>
@@ -163,14 +163,14 @@ export const PinLockScreen: React.FC<PinLockScreenProps> = ({
               type="button"
               onClick={handleClear}
               aria-label={t.pinScreen.clear}
-              className="h-13 rounded-2xl text-xs font-semibold text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="h-13 rounded-2xl text-xs font-semibold text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 active:scale-95 transition-all"
             >
               {t.pinScreen.clear}
             </button>
             <button
               type="button"
               onClick={() => appendDigit('0')}
-              className="h-13 rounded-2xl bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 active:bg-blue-50 dark:active:bg-blue-950/50 border border-slate-200 dark:border-slate-700 text-lg font-bold text-slate-900 dark:text-slate-100 transition-colors tabular-nums"
+              className="h-13 rounded-2xl bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 active:bg-blue-50 dark:active:bg-blue-950/50 active:scale-95 border border-slate-200 dark:border-slate-700 text-lg font-bold text-slate-900 dark:text-slate-100 transition-all tabular-nums"
             >
               0
             </button>
@@ -178,7 +178,7 @@ export const PinLockScreen: React.FC<PinLockScreenProps> = ({
               type="button"
               onClick={handleBackspace}
               aria-label={t.pinScreen.backspace}
-              className="h-13 rounded-2xl flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="h-13 rounded-2xl flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 active:scale-95 transition-all"
             >
               <Delete className="w-5 h-5" />
             </button>

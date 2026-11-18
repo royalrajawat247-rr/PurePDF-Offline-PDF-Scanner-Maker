@@ -22,11 +22,12 @@ import {
   deleteDocument,
   deleteDocumentsBulk,
   getAllDocuments,
+  loadInitialDocuments,
   loadSettings,
   lockVaultDocument,
+  renameVaultDocument,
   saveDocument,
   saveSettings,
-  seedInitialDocumentsIfEmpty,
   triggerDownloadBytes,
   unlockVaultDocument,
   updateDocumentTags,
@@ -119,21 +120,6 @@ export default function App() {
     document.title = 'PurePDF';
   }, [settings.darkMode, settings.language]);
 
-  // Toggle Adsterra sponsored ad slot visibility (Tools Hub tab only)
-  useEffect(() => {
-    const adSlot = document.getElementById('adsterra-tools-slot');
-    if (adSlot) {
-      const isToolsHub = activeTab === 'tools' && activeTool === null;
-      adSlot.style.display = isToolsHub ? 'flex' : 'none';
-    }
-    return () => {
-      const adSlot = document.getElementById('adsterra-tools-slot');
-      if (adSlot) {
-        adSlot.style.display = 'none';
-      }
-    };
-  }, [activeTab, activeTool]);
-
   const refreshVault = useCallback(async () => {
     try {
       const loaded = await getAllDocuments();
@@ -145,7 +131,7 @@ export default function App() {
 
   useEffect(() => {
     let active = true;
-    seedInitialDocumentsIfEmpty()
+    loadInitialDocuments()
       .then((initial) => {
         if (active) setDocs(initial);
       })
@@ -356,6 +342,16 @@ export default function App() {
     }
   };
 
+  const handleRenameDoc = async (doc: VaultDocument, nextName: string) => {
+    try {
+      const updated = await renameVaultDocument(doc, nextName);
+      await refreshVault();
+      notify(`Renamed to "${updated.name}".`);
+    } catch (err) {
+      notify(err instanceof Error ? err.message : 'Unable to rename document.');
+    }
+  };
+
   const renderToolSubPage = (tool: ToolId) => {
     const goBack = () => {
       setActiveTool(null);
@@ -462,7 +458,7 @@ export default function App() {
         </div>
       )}
 
-      <main className="flex-1 w-full max-w-5xl mx-auto px-3.5 sm:px-6 pt-3.5 sm:pt-5 pb-20">
+      <main className="flex-1 w-full max-w-5xl mx-auto px-3 sm:px-6 pt-2.5 sm:pt-4 pb-20">
         <AppErrorBoundary
           onReset={() => {
             setActiveTool(null);
@@ -500,6 +496,8 @@ export default function App() {
                 setModalState({ mode: doc.isLocked ? 'unlock' : 'lock', doc })
               }
               onUpdateTags={handleUpdateTags}
+              onRename={handleRenameDoc}
+              onScanFirst={() => handleOpenTool('camera-scan', 'vault')}
               onExportZip={handleExportZip}
               onExportSelectedZip={handleExportSelectedZip}
               onDownload={handleDownloadDoc}

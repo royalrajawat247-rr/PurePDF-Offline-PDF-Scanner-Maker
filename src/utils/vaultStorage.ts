@@ -1,13 +1,17 @@
 import type { AppSettings, BackupPayload, SerializedVaultDocument, VaultDocument } from '../types';
 import { base64ToUint8, uint8ToBase64, validateBackupPayload } from './documentMath';
 import { decryptBytesWithPassword, encryptBytesWithPassword } from './pdfCrypto';
-import { createSamplePdfBytes } from './sampleDocs';
 
 const DB_NAME = 'pdfStudioVaultDB';
 const DB_VERSION = 1;
 const STORE_NAME = 'documents';
 const SETTINGS_KEY = 'pdf_studio_settings_v1';
-const SEEDED_KEY = 'pdf_studio_seeded_v1';
+
+const LEGACY_DEMO_NAMES = new Set([
+  'Q4 Expense Invoice.pdf',
+  'Vendor NDA Agreement.pdf',
+  'Office Supply Receipt #4082.pdf',
+]);
 
 const DEFAULT_SETTINGS: AppSettings = {
   darkMode: false,
@@ -156,92 +160,34 @@ export async function deleteDocumentsBulk(ids: string[]): Promise<number> {
   }
 }
 
-export async function seedInitialDocumentsIfEmpty(): Promise<VaultDocument[]> {
+export async function loadInitialDocuments(): Promise<VaultDocument[]> {
+  let hadLegacySeedFlag = false;
   try {
-    const existing = await getAllDocuments();
-    if (existing.length > 0 || localStorage.getItem(SEEDED_KEY) === '1') {
-      return existing;
-    }
-
-  const now = Date.now();
-  const inv = createSamplePdfBytes(
-    'Q4 Expense Invoice.pdf',
-    'Northwind Logistics LLC',
-    [
-      'Invoice INV-2026-0418\n\nCloud Infrastructure & Storage: $420.00\nDocument Archival Audit: $315.00\nCompliance Review Package: $185.00\n\nTotal Paid: $920.00',
-      'Payment Confirmation & Receipt Appendix\n\nCleared locally on November 17, 2026.',
-    ]
-  );
-
-  const nda = createSamplePdfBytes(
-    'Vendor NDA Agreement.pdf',
-    'Confidentiality & Privacy',
-    [
-      'Mutual Confidentiality Agreement\n\nAll documents processed in this studio remain strictly on-device with zero external uploads.',
-    ]
-  );
-
-  const receipt = createSamplePdfBytes(
-    'Office Supply Receipt #4082.pdf',
-    'Store #14 Summary',
-    [
-      'Receipt #4082\n\n2x Archival Paper Ream: $24.50\n1x Ink Cartridge Black: $38.00\n4x Heavyweight Folders: $14.00\nSubtotal: $76.50 | Tax: $6.12 | Total: $82.62',
-    ]
-  );
-
-  const seeds: VaultDocument[] = [
-    {
-      id: 'seed-invoice-1',
-      name: 'Q4 Expense Invoice.pdf',
-      category: 'scanned',
-      mimeType: 'application/pdf',
-      size: inv.bytes.byteLength,
-      pageCount: inv.pageCount,
-      createdAt: now - 3600_000 * 4,
-      updatedAt: now - 3600_000 * 4,
-      isLocked: false,
-      tags: ['Finance', 'Work'],
-      data: inv.bytes,
-      thumbnailDataUrl: inv.thumbnailDataUrl,
-    },
-    {
-      id: 'seed-nda-2',
-      name: 'Vendor NDA Agreement.pdf',
-      category: 'signed',
-      mimeType: 'application/pdf',
-      size: nda.bytes.byteLength,
-      pageCount: nda.pageCount,
-      createdAt: now - 3600_000 * 18,
-      updatedAt: now - 3600_000 * 18,
-      isLocked: false,
-      tags: ['Work'],
-      data: nda.bytes,
-      thumbnailDataUrl: nda.thumbnailDataUrl,
-    },
-    {
-      id: 'seed-receipt-3',
-      name: 'Office Supply Receipt #4082.pdf',
-      category: 'scanned',
-      mimeType: 'application/pdf',
-      size: receipt.bytes.byteLength,
-      pageCount: receipt.pageCount,
-      createdAt: now - 3600_000 * 48,
-      updatedAt: now - 3600_000 * 48,
-      isLocked: false,
-      tags: ['Finance', 'Personal'],
-      data: receipt.bytes,
-      thumbnailDataUrl: receipt.thumbnailDataUrl,
-    },
-  ];
-
-    for (const doc of seeds) {
-      await saveDocument(doc);
-    }
-    localStorage.setItem(SEEDED_KEY, '1');
-    return seeds;
+    hadLegacySeedFlag = localStorage.getItem('pdf_studio_seeded_v1') !== null;
+    localStorage.removeItem('pdf_studio_seeded_v1');
   } catch {
-    return [];
+    hadLegacySeedFlag = false;
   }
+
+  const docs = await getAllDocuments();
+  if (!hadLegacySeedFlag) {
+    return docs;
+  }
+
+  const legacyDemoIds = docs
+    .filter((doc) => LEGACY_DEMO_NAMES.has(doc.name))
+    .map((doc) => doc.id);
+
+  if (legacyDemoIds.length > 0) {
+    try {
+      await deleteDocumentsBulk(legacyDemoIds);
+      return docs.filter((doc) => !LEGACY_DEMO_NAMES.has(doc.name));
+    } catch {
+      return docs;
+    }
+  }
+
+  return docs;
 }
 
 export async function lockVaultDocument(
@@ -284,6 +230,27 @@ export async function updateDocumentTags(
   const updated: VaultDocument = {
     ...doc,
     tags,
+    updatedAt: Date.now(),
+  };
+  await saveDocument(updated);
+  return updated;
+}
+
+export async function renameVaultDocument(
+  doc: VaultDocument,
+  nextName: string
+): Promise<VaultDocument> {
+  const trimmed = nextName.trim();
+  if (!trimmed) {
+    throw new Error('Document name cannot be empty.');
+  }
+  const origExtMatch = /\.(pdf|txt)$/i.exec(doc.name);
+  const hasExt = /\.(pdf|txt)$/i.test(trimmed);
+  const finalName = !hasExt && origExtMatch ? `${trimmed}${origExtMatch[0]}` : trimmed;
+
+  const updated: VaultDocument = {
+    ...doc,
+    name: finalName,
     updatedAt: Date.now(),
   };
   await saveDocument(updated);
@@ -345,7 +312,6 @@ export async function importVaultBackupJson(
     };
     await saveDocument(doc);
   }
-  localStorage.setItem(SEEDED_KEY, '1');
   const restoredSettings = payload.settings ? normalizeSettings(payload.settings) : undefined;
   if (restoredSettings) {
     saveSettings(restoredSettings);

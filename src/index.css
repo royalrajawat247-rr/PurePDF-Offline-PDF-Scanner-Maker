@@ -8,9 +8,17 @@
     --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   }
 
-  html {
+  html, body {
     font-family: var(--font-sans);
     -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    overscroll-behavior: none;
+    overscroll-behavior-y: none;
+  }
+
+  button, [role="button"] {
+    user-select: none;
+    -webkit-user-select: none;
   }
 
   h1, h2, h3, h4, .font-display {
@@ -21,6 +29,15 @@
     font-family: var(--font-mono);
     font-variant-numeric: tabular-nums;
   }
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 .tabular-nums {

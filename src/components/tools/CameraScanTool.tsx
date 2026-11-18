@@ -1,10 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Camera, CheckCircle2, Crop, Download, FilePlus2, RotateCw, Trash2, Upload } from 'lucide-react';
+import { Camera, CheckCircle2, Crop, Download, RotateCw, Trash2, Upload } from 'lucide-react';
 import type { ScanFilterMode, ScanQualityPreset, VaultDocument } from '../../types';
 import { formatFileSize, type CropEdgesPct } from '../../utils/documentMath';
 import { applyScanFilterToDataUrl, cropDataUrl, rotateDataUrl90 } from '../../utils/imageFilters';
 import { generatePdfFromImages } from '../../utils/pdfEngine';
-import { createSampleDocumentImage } from '../../utils/sampleDocs';
 import { triggerDownloadBytes } from '../../utils/vaultStorage';
 import { CropImageModal } from '../CropImageModal';
 import { SubPageHeader } from '../SubPageHeader';
@@ -50,22 +49,32 @@ export const CameraScanTool: React.FC<CameraScanToolProps> = ({
     setCameraError(null);
     setErrorMsg(null);
     if (!navigator.mediaDevices?.getUserMedia) {
-      setCameraError('Live camera API is unavailable on this browser. Use Upload Image or Sample Page below.');
+      setCameraError('Live camera is unavailable on this browser. Please use Upload Photo below.');
       return;
     }
     try {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((t) => t.stop());
+        streamRef.current = null;
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 960 } },
+        video: { facingMode: { ideal: 'environment' } },
         audio: false,
       });
       streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
+
+      const video = videoRef.current;
+      if (video) {
+        video.srcObject = stream;
+        video.setAttribute('playsinline', 'true');
+        await video.play().catch(() => {
+          // autoPlay + playsInline + muted handles inline playback on mobile WebViews
+        });
       }
       setCameraActive(true);
     } catch {
-      setCameraError('Camera permission denied or no webcam detected. You can capture a sample page or upload a photo.');
+      setCameraError('Camera permission denied or no camera detected. Please allow camera access or use Upload Photo.');
       setCameraActive(false);
     }
   };
@@ -104,14 +113,17 @@ export const CameraScanTool: React.FC<CameraScanToolProps> = ({
   const captureFromVideo = async () => {
     try {
       const video = videoRef.current;
-      if (!video || !cameraActive) return;
+      if (!video || !cameraActive || video.readyState < 2 || video.videoWidth === 0 || video.videoHeight === 0) {
+        setErrorMsg('Camera feed is still initializing. Please try again in a moment.');
+        return;
+      }
       const canvas = document.createElement('canvas');
-      canvas.width = video.videoWidth || 1024;
-      canvas.height = video.videoHeight || 768;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      const url = canvas.toDataURL('image/jpeg', 0.92);
+      const url = canvas.toDataURL('image/jpeg', 0.95);
       canvas.width = 0;
       canvas.height = 0;
       await addPageFromDataUrl(url);
@@ -141,15 +153,6 @@ export const CameraScanTool: React.FC<CameraScanToolProps> = ({
     }
   };
 
-  const handleCaptureSample = async () => {
-    try {
-      const variants: Array<'invoice' | 'receipt' | 'contract'> = ['invoice', 'receipt', 'contract'];
-      const sampleUrl = createSampleDocumentImage(variants[pages.length % variants.length]);
-      await addPageFromDataUrl(sampleUrl);
-    } catch (err) {
-      setErrorMsg(err instanceof Error ? err.message : 'Failed to generate sample page.');
-    }
-  };
 
   const handleChangeFilter = async (nextFilter: ScanFilterMode) => {
     setActiveFilter(nextFilter);
@@ -285,30 +288,26 @@ export const CameraScanTool: React.FC<CameraScanToolProps> = ({
         <div className="relative rounded-xl overflow-hidden bg-slate-900 aspect-[4/3] sm:aspect-video flex flex-col items-center justify-center text-center">
           <video
             ref={videoRef}
+            autoPlay
             playsInline
             muted
-            className={`w-full h-full object-cover ${cameraActive ? 'block' : 'hidden'}`}
+            className={`w-full h-full object-cover ${
+              cameraActive ? 'opacity-100' : 'opacity-0 pointer-events-none absolute inset-0'
+            }`}
           />
           {!cameraActive && (
-            <div className="p-6 max-w-md space-y-3">
+            <div className="relative z-10 p-6 max-w-md space-y-3">
               <Camera className="w-10 h-10 text-blue-400 mx-auto" />
               <p className="text-sm font-medium text-slate-200">
-                {cameraError || 'Start your device camera to scan physical documents, or import/test with a sample page.'}
+                {cameraError || 'Start your device rear camera to scan physical documents, or upload a photo.'}
               </p>
               <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
                 <button
                   type="button"
                   onClick={startCamera}
-                  className="min-h-[44px] px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors"
+                  className="min-h-[44px] px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-sm font-semibold transition-all"
                 >
                   Enable Live Camera
-                </button>
-                <button
-                  type="button"
-                  onClick={handleCaptureSample}
-                  className="min-h-[44px] px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-100 text-sm font-semibold transition-colors"
-                >
-                  Capture Sample Page
                 </button>
               </div>
             </div>
@@ -321,13 +320,13 @@ export const CameraScanTool: React.FC<CameraScanToolProps> = ({
               <button
                 type="button"
                 onClick={captureFromVideo}
-                className="min-h-[44px] px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold inline-flex items-center gap-2"
+                className="min-h-[44px] px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-sm font-semibold inline-flex items-center gap-2 transition-all"
               >
                 <Camera className="w-4 h-4" />
                 <span>Capture Frame</span>
               </button>
             )}
-            <label className="min-h-[44px] px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-700 text-sm font-semibold inline-flex items-center gap-2 cursor-pointer">
+            <label className="min-h-[44px] px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-700 active:scale-95 text-sm font-semibold inline-flex items-center gap-2 cursor-pointer transition-all">
               <Upload className="w-4 h-4" />
               <span>Upload Photo</span>
               <input
@@ -338,14 +337,6 @@ export const CameraScanTool: React.FC<CameraScanToolProps> = ({
                 className="sr-only"
               />
             </label>
-            <button
-              type="button"
-              onClick={handleCaptureSample}
-              className="min-h-[44px] px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 text-sm font-semibold inline-flex items-center gap-1.5"
-            >
-              <FilePlus2 className="w-4 h-4" />
-              <span>Add Sample Page</span>
-            </button>
           </div>
 
           {/* Filter Mode Selector */}
@@ -429,7 +420,7 @@ export const CameraScanTool: React.FC<CameraScanToolProps> = ({
 
         {pages.length === 0 ? (
           <p className="text-sm text-slate-500 dark:text-slate-400 py-4 text-center">
-            No pages scanned yet. Capture a camera frame, upload a photo, or click Add Sample Page.
+            No pages scanned yet. Enable the live camera to capture a frame or upload a photo.
           </p>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
